@@ -6,7 +6,7 @@ Personal Android builds of [T3 Code](https://github.com/pingdotgg/t3code), distr
 
 Add `https://github.com/AKolenda/t3code-android` in Obtainium. Enable automatic updates for the app and background checks. Android may require permission to install apps and approval for the first update.
 
-The dedicated build server checks upstream `main` every 15 minutes and publishes when its commit changes. It runs as `t3builder` under `t3-android-build.timer`, with files and caches under `/opt/t3-android-builder`. GitHub credentials are supplied through systemd credentials only for publishing. Failed builds leave the last successful commit unchanged and are retried on the next check.
+The dedicated build server checks upstream `main` every 15 minutes and publishes when its commit changes. It runs as `t3builder` under `t3-android-build.timer`, with files and caches under `/opt/t3-android-builder`. A root-owned GitHub credential file is readable only by root and the build group; the script reads it for publishing. Failed builds leave the last successful commit unchanged and are retried on the next check.
 
 The GitHub **Android APK** workflow is a manual fallback. Run it to build a specific commit or a branch from `AKolenda/t3code`. The server continues to track upstream `main`.
 

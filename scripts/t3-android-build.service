@@ -9,7 +9,7 @@ User=t3builder
 Group=t3builder
 WorkingDirectory=/opt/t3-android-builder
 Environment=HOME=/opt/t3-android-builder
-LoadCredential=github-token:/etc/t3-android-builder/github-token
+Environment=T3_GITHUB_TOKEN_FILE=/etc/t3-android-builder/github-token
 ExecStart=/bin/bash /opt/t3-android-builder/automation/scripts/build-server.sh
 TimeoutStartSec=2h
 Nice=10
@@ -21,4 +21,3 @@ PrivateTmp=true
 ProtectSystem=strict
 ProtectHome=true
 ReadWritePaths=/opt/t3-android-builder
-

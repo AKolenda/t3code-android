@@ -46,6 +46,6 @@ grep -qi fac61745dc0903786fb9ede62a962b399f7348f0bb6f899b8332667591033b9c "$out/
 cp release-version.json "$out/"
 printf 'Source: %s\n\nStandalone ARM64 Android APK. Package: com.t3tools.t3code. Compatible with the existing template-signed installation. Expo OTA disabled. Direct server connections supported; upstream cloud service credentials are not included.\n' "$identity" > "$out/notes.md"
 # Credentials are exposed only to the release command, not app dependency scripts.
-GH_TOKEN=$(cat "$CREDENTIALS_DIRECTORY/github-token") gh release create "v$version" "$out/T3-Code-$version.apk" "$out/SHA256SUMS" "$out/signature.txt" "$out/release-version.json" --repo "$release_repository" --title "T3 Code v$version" --notes-file "$out/notes.md" --latest
+GH_TOKEN=$(cat "$T3_GITHUB_TOKEN_FILE") gh release create "v$version" "$out/T3-Code-$version.apk" "$out/SHA256SUMS" "$out/signature.txt" "$out/release-version.json" --repo "$release_repository" --title "T3 Code v$version" --notes-file "$out/notes.md" --latest
 printf '%s\n' "$identity" > state/last-success
 echo "Published v$version from $identity"
