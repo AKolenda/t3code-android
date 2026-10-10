@@ -1,0 +1,105 @@
+name: Android APK
+on:
+  workflow_dispatch:
+    inputs:
+      source_repository:
+        description: Source repository
+        default: pingdotgg/t3code
+        required: true
+        type: string
+      source_ref:
+        description: Branch, tag, or commit
+        default: main
+        required: true
+        type: string
+  schedule:
+    - cron: '17 8 * * *'
+  push:
+    branches: [main]
+    paths: ['.github/workflows/android.yml', 'scripts/**']
+permissions:
+  contents: write
+concurrency:
+  group: android-release
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    env:
+      APP_VARIANT: production
+      T3CODE_MOBILE_UPDATES_ENABLED: '0'
+      NODE_ENV: production
+      NODE_OPTIONS: --max-old-space-size=6144
+      GH_TOKEN: ${{ github.token }}
+      SOURCE_REPOSITORY: ${{ inputs.source_repository || 'pingdotgg/t3code' }}
+      SOURCE_REF: ${{ inputs.source_ref || 'main' }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Checkout app source
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.SOURCE_REPOSITORY }}
+          ref: ${{ env.SOURCE_REF }}
+          path: source
+      - name: Check for source changes
+        id: source
+        run: |
+          sha=$(git -C source rev-parse HEAD)
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+          latest=$(gh api "repos/$GITHUB_REPOSITORY/releases/latest" --jq '.body' 2>/dev/null || true)
+          if [[ "$GITHUB_EVENT_NAME" == schedule ]] && [[ "$latest" == *"Source: $SOURCE_REPOSITORY@$sha"* ]]; then
+            echo 'build=false' >> "$GITHUB_OUTPUT"
+          else
+            echo 'build=true' >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/setup-java@v4
+        if: steps.source.outputs.build == 'true'
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+        if: steps.source.outputs.build == 'true'
+      - uses: voidzero-dev/setup-vp@v1
+        if: steps.source.outputs.build == 'true'
+        with:
+          node-version-file: source/package.json
+          cache: false
+      - name: Install locked dependencies
+        if: steps.source.outputs.build == 'true'
+        working-directory: source
+        run: vp install --frozen-lockfile
+        env:
+          NODE_ENV: development
+      - name: Generate Android project
+        if: steps.source.outputs.build == 'true'
+        working-directory: source/apps/mobile
+        run: vp exec expo prebuild --platform android --no-install
+      - name: Set release version
+        if: steps.source.outputs.build == 'true'
+        id: version
+        run: python3 scripts/prepare-release.py
+      - name: Build APK
+        if: steps.source.outputs.build == 'true'
+        working-directory: source/apps/mobile/android
+        run: ./gradlew :app:assembleRelease --no-daemon --max-workers=2 -PreactNativeArchitectures=arm64-v8a -Dorg.gradle.jvmargs='-Xmx5g -XX:MaxMetaspaceSize=1g'
+      - name: Verify APK and prepare release
+        if: steps.source.outputs.build == 'true'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          SOURCE_SHA: ${{ steps.source.outputs.sha }}
+        run: |
+          mkdir -p dist
+          cp source/apps/mobile/android/app/build/outputs/apk/release/app-release.apk "dist/T3-Code-$VERSION.apk"
+          tools=$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)
+          "$tools/apksigner" verify --verbose --print-certs "dist/T3-Code-$VERSION.apk" | tee dist/signature.txt
+          grep -qi fac61745dc0903786fb9ede62a962b399f7348f0bb6f899b8332667591033b9c dist/signature.txt
+          "$tools/zipalign" -c -P 16 4 "dist/T3-Code-$VERSION.apk"
+          (cd dist && sha256sum ./*.apk > SHA256SUMS)
+          cp release-version.json dist/
+          printf 'Source: %s@%s\n\nStandalone ARM64 Android build for Obtainium. Package: com.t3tools.t3code. Uses the existing Expo template signing key. OTA updates disabled. Direct server connections supported; upstream cloud sign-in and push credentials are not bundled.\n' "$SOURCE_REPOSITORY" "$SOURCE_SHA" > release-notes.md
+      - name: Publish APK
+        if: steps.source.outputs.build == 'true'
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
+        run: gh release create "$TAG" dist/* --title "T3 Code $TAG" --notes-file release-notes.md --latest
