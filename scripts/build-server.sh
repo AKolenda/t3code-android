@@ -19,6 +19,13 @@ fi
 git -C source fetch --depth 1 "https://github.com/$source_repository.git" "$source_ref"
 sha=$(git -C source rev-parse FETCH_HEAD)
 identity="$source_repository@$sha"
+if [[ ${T3_CHECK_ONLY:-0} == 1 ]]; then
+  echo "Upstream: $identity"
+  command -v vp
+  java -version
+  GH_TOKEN=$(cat "$T3_GITHUB_TOKEN_FILE") gh api "repos/$release_repository" --jq '.permissions.push'
+  exit 0
+fi
 if [[ -f state/last-success ]] && [[ "$(cat state/last-success)" == "$identity" ]]; then
   echo "No update: $identity"
   exit 0
