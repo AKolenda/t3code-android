@@ -6,7 +6,7 @@ source_ref=${SOURCE_REF:-main}
 release_repository=AKolenda/t3code-android
 export JAVA_HOME="$base/toolchain/jdk"
 export ANDROID_HOME="$base/toolchain/sdk"
-export PATH="$base/toolchain/node/bin:$HOME/.vite-plus/bin:$JAVA_HOME/bin:$ANDROID_HOME/platform-tools:$PATH"
+export PATH="$base/toolchain/node/bin:$HOME/.local/share/vite-plus/bin:$HOME/.vite-plus/bin:$JAVA_HOME/bin:$ANDROID_HOME/platform-tools:$PATH"
 export APP_VARIANT=production T3CODE_MOBILE_UPDATES_ENABLED=0
 export NODE_OPTIONS=--max-old-space-size=8192
 mkdir -p "$base/state" "$base/releases"
