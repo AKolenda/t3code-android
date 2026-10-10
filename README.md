@@ -6,7 +6,11 @@ Personal Android builds of [T3 Code](https://github.com/pingdotgg/t3code), distr
 
 Add `https://github.com/AKolenda/t3code-android` in Obtainium. Enable automatic updates for the app and background checks. Android may require permission to install apps and approval for the first update.
 
-The workflow checks upstream `main` daily at 08:17 UTC and publishes when its commit changes. Changes to the workflow or scripts also trigger a build. Run **Android APK** manually to build a specific commit or a branch from `AKolenda/t3code`. Scheduled runs continue to track upstream `main`.
+The dedicated build server checks upstream `main` every 15 minutes and publishes when its commit changes. It runs as `t3builder` under `t3-android-build.timer`, with files and caches under `/opt/t3-android-builder`. GitHub credentials are supplied through systemd credentials only for publishing. Failed builds leave the last successful commit unchanged and are retried on the next check.
+
+The GitHub **Android APK** workflow is a manual fallback. Run it to build a specific commit or a branch from `AKolenda/t3code`. The server continues to track upstream `main`.
+
+Server operations: `systemctl status t3-android-build.timer`, `journalctl -u t3-android-build.service`, and `systemctl start t3-android-build.service`. Disable automatic builds with `systemctl disable --now t3-android-build.timer`. To deploy automation changes, update `/opt/t3-android-builder/automation` from this repository and reload systemd if units changed.
 
 Automated APKs support ARM64 phones. The package is `com.t3tools.t3code`, with increasing version codes based on UTC minutes since the Unix epoch. Builds retain the Expo template debug signing key used by the existing installation. These are personal builds, not official store releases; the workflow verifies the certificate before publishing.
 

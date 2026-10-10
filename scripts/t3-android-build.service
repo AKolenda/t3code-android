@@ -1,0 +1,24 @@
+[Unit]
+Description=Build and publish new T3 Code Android revisions
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=t3builder
+Group=t3builder
+WorkingDirectory=/opt/t3-android-builder
+Environment=HOME=/opt/t3-android-builder
+LoadCredential=github-token:/etc/t3-android-builder/github-token
+ExecStart=/bin/bash /opt/t3-android-builder/automation/scripts/build-server.sh
+TimeoutStartSec=2h
+Nice=10
+CPUQuota=600%
+MemoryMax=24G
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/t3-android-builder
+
