@@ -58,12 +58,17 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-      - uses: android-actions/setup-android@v3
+      - uses: android-actions/setup-android@v4.0.4
         if: steps.source.outputs.build == 'true'
+        with:
+          packages: platform-tools
+          log-accepted-android-sdk-licenses: false
       - uses: voidzero-dev/setup-vp@v1
         if: steps.source.outputs.build == 'true'
         with:
           node-version-file: source/package.json
+          version-file: source/package.json
+          run-install: false
           cache: false
       - name: Install locked dependencies
         if: steps.source.outputs.build == 'true'
