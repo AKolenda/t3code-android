@@ -10,11 +10,13 @@ Group=t3builder
 WorkingDirectory=/opt/t3-android-builder
 Environment=HOME=/opt/t3-android-builder
 Environment=T3_GITHUB_TOKEN_FILE=/etc/t3-android-builder/github-token
+ExecStartPre=/bin/bash /opt/t3-android-builder/automation/scripts/pre-build.sh
 ExecStart=/bin/bash /opt/t3-android-builder/automation/scripts/build-server.sh
+ExecStopPost=+/bin/bash /opt/t3-android-builder/automation/scripts/post-build.sh
 TimeoutStartSec=2h
 Nice=10
 CPUQuota=600%
-MemoryMax=24G
+MemoryMax=32G
 UMask=0077
 NoNewPrivileges=true
 PrivateTmp=true

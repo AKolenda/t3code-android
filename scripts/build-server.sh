@@ -30,7 +30,7 @@ if [[ -f state/last-success ]] && [[ "$(cat state/last-success)" == "$identity" 
   echo "No update: $identity"
   exit 0
 fi
-git -C source checkout --detach "$sha"
+git -C source checkout --force --detach "$sha"
 echo "Building $identity"
 cd source
 NODE_ENV=development vp install --frozen-lockfile
